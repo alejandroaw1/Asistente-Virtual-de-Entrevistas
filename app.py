@@ -29,13 +29,37 @@ def obtener_cliente():
     return genai.Client(api_key=api_key)
 
 
+
 def consultar_gemini(prompt):
     cliente = obtener_cliente()
 
     respuesta = cliente.models.generate_content(
-        model="gemini-3.8-flash",
+        model="gemini-2.5-flash",
         contents=prompt
     )
+
+    texto = respuesta.text
+
+    if isinstance(texto, str):
+        return texto.strip()
+
+    # Intentar recuperar el texto desde las partes de la respuesta
+    if respuesta.candidates:
+        partes = respuesta.candidates[0].content.parts
+
+        textos = [
+            parte.text
+            for parte in partes
+            if getattr(parte, "text", None)
+        ]
+
+        if textos:
+            return "\n".join(textos).strip()
+
+    raise ValueError(
+        "Gemini no devolvió texto. Intenta nuevamente."
+    )
+
 
     return respuesta.text.strip()
 
